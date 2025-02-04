@@ -1,101 +1,313 @@
-import Image from "next/image";
+"use client";
+import React, {useEffect, useState} from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CloudRain, Thermometer, Wind, Droplets, Sun, Airplay } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function Home() {
+
+export default  function Home() {
+  // Extract hourly data for the temperature chart
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch(
+          "https://api.weatherapi.com/v1/forecast.json?key=00577e0f20794911874182844250402&q=Gandhinagar&days=1&aqi=yes&alerts=no"
+        );
+        const weatherData = await res.json();
+        setData(weatherData);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  if (!data || !data.forecast) return <p>Loading...</p>;
+
+  const hourlyData = data.forecast.forecastday[0].hour.map(hour => ({
+    time: hour.time.split(' ')[1],
+    temp: hour.temp_c,
+    feels_like: hour.feelslike_c,
+  }));
+
+  const hourlyWindData =
+    data.forecast.forecastday[0]?.hour?.map((hour: any) => ({
+      time: hour.time.split(" ")[1],
+      wind_kph: hour.wind_kph,
+      wind_dir: hour.wind_dir,
+    })) || [];
+
+  const currentWeather = data.current;
+  const location = data.location;
+  const forecast = data.forecast.forecastday[0];
+  const currentAirQuality = data.forecast.forecastday[0]?.day.air_quality;
+  const airQualityData = [
+    {
+      name: "CO",
+      value: currentAirQuality.co,
+    },
+    {
+      name: "NO2",
+      value: currentAirQuality.no2,
+    },
+    {
+      name: "O3",
+      value: currentAirQuality.o3,
+    },
+    {
+      name: "SO2",
+      value: currentAirQuality.so2,
+    },
+    {
+      name: "PM2.5",
+      value: currentAirQuality.pm2_5,
+    },
+    {
+      name: "PM10",
+      value: currentAirQuality.pm10,
+    },
+  ];
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Location Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">{location.name}, {location.country}</h1>
+          <p className="text-gray-500">Local time: {location.localtime}</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Current Weather Card */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Current Weather</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Temperature Section */}
+              <div className="flex items-center space-x-4">
+                <Thermometer className="h-8 w-8 text-orange-500" />
+                <div>
+                  <p className="text-4xl font-bold">{currentWeather.temp_c}°C</p>
+                  <p className="text-sm text-gray-500">Feels like {currentWeather.feelslike_c}°C</p>
+                </div>
+              </div>
+
+              {/* Condition Section */}
+              <div className="flex items-center space-x-4">
+                <CloudRain className="h-8 w-8 text-blue-500" />
+                <div>
+                  <p className="text-lg">{currentWeather.condition.text}</p>
+                  <p className="text-sm text-gray-500">Cloud: {currentWeather.cloud}%</p>
+                </div>
+              </div>
+
+              {/* Wind Section */}
+              <div className="flex items-center space-x-4">
+                <Wind className="h-8 w-8 text-teal-500" />
+                <div>
+                  <p className="text-lg">{currentWeather.wind_kph} km/h</p>
+                  <p className="text-sm text-gray-500">Direction: {currentWeather.wind_dir}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Detailed Weather Info */}
+        <Tabs defaultValue="temperature" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
+            <TabsTrigger value="temperature">Temperature</TabsTrigger>
+            <TabsTrigger value="humidity">Humidity</TabsTrigger>
+            <TabsTrigger value="wind">Wind</TabsTrigger>
+            <TabsTrigger value="air-quality">Air Quality</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="temperature" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Temperature Over 24 Hours</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={hourlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="time" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="temp" stroke="#ff7300" name="Temperature" />
+                      <Line type="monotone" dataKey="feels_like" stroke="#82ca9d" name="Feels Like" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="humidity" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Humidity & Comfort</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center space-x-4">
+                    <Droplets className="h-8 w-8 text-blue-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{currentWeather.humidity}%</p>
+                      <p className="text-gray-500">Relative Humidity</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <Sun className="h-8 w-8 text-yellow-500" />
+                    <div>
+                      <p className="text-2xl font-bold">UV: {currentWeather.uv}</p>
+                      <p className="text-gray-500">Dewpoint: {currentWeather.dewpoint_c}°C</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="wind" className="mt-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Wind Conditions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Wind Speed */}
+            <div className="flex items-center space-x-4">
+              <Wind className="h-8 w-8 text-gray-500" />
+              <div>
+                <p className="text-2xl font-bold">{currentWeather.wind_kph} km/h</p>
+                <p className="text-gray-500">Wind Speed</p>
+              </div>
+            </div>
+
+            {/* Humidity & UV */}
+            <div className="flex items-center space-x-4">
+              <Droplets className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">{currentWeather.humidity}%</p>
+                <p className="text-gray-500">Relative Humidity</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Sun className="h-8 w-8 text-yellow-500" />
+              <div>
+                <p className="text-2xl font-bold">UV: {currentWeather.uv}</p>
+                <p className="text-gray-500">Pressure: {currentWeather.pressure_mb} mb</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Wind Speed Chart */}
+          <div className="mt-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={hourlyWindData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" />
+                <YAxis label={{ value: "km/h", angle: -90, position: "insideLeft" }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="wind_kph" stroke="#3182CE" strokeWidth={3} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+
+    <TabsContent value="air-quality" className="mt-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Air Quality</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Air Quality Indexes */}
+            <div className="flex items-center space-x-4">
+              <Airplay className="h-8 w-8 text-gray-500" />
+              <div>
+                <p className="text-2xl font-bold">CO: {currentAirQuality.co} µg/m³</p>
+                <p className="text-gray-500">Carbon Monoxide</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Airplay className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">NO2: {currentAirQuality.no2} µg/m³</p>
+                <p className="text-gray-500">Nitrogen Dioxide</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Airplay className="h-8 w-8 text-yellow-500" />
+              <div>
+                <p className="text-2xl font-bold">O3: {currentAirQuality.o3} µg/m³</p>
+                <p className="text-gray-500">Ozone</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Airplay className="h-8 w-8 text-red-500" />
+              <div>
+                <p className="text-2xl font-bold">SO2: {currentAirQuality.so2} µg/m³</p>
+                <p className="text-gray-500">Sulphur Dioxide</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Air Quality Chart (PM2.5, PM10) */}
+          <div className="mt-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={airQualityData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis label={{ value: "µg/m³", angle: -90, position: "insideLeft" }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="value" stroke="#3182CE" strokeWidth={3} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+
+          {/* Additional tab contents would go here */}
+        </Tabs>
+
+        {/* Daily Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <p className="font-semibold">Max Temperature</p>
+                <p className="text-2xl">{forecast.day.maxtemp_c}°C</p>
+              </div>
+              <div>
+                <p className="font-semibold">Min Temperature</p>
+                <p className="text-2xl">{forecast.day.mintemp_c}°C</p>
+              </div>
+              <div>
+                <p className="font-semibold">Chance of Rain</p>
+                <p className="text-2xl">{forecast.day.daily_chance_of_rain}%</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
+
