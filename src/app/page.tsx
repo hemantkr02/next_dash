@@ -5,10 +5,83 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CloudRain, Thermometer, Wind, Droplets, Sun, Airplay } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+// WeatherComponent.tsx or your component file
+
+// 1. Add the interfaces here at the top of the file
+interface HourlyData {
+  time: string;
+  temp: number;
+  feels_like: number;
+}
+
+interface HourlyWindData {
+  time: string;
+  wind_kph: number;
+  wind_dir: string;
+}
+
+interface CurrentWeather {
+  temp_c: number;
+  feelslike_c: number;
+  wind_kph: number;
+  wind_dir: string;
+  condition: {
+    text: string;
+  };
+  humidity: number;
+  cloud: number;
+  uv: number;
+  pressure_mb: number;
+}
+
+interface Location {
+  name: string;
+  country: string;
+  localtime: string;
+}
+
+interface AirQuality {
+  co: number;
+  no2: number;
+  o3: number;
+  so2: number;
+  pm2_5: number;
+  pm10: number;
+  "us-epa-index": number;
+  "gb-defra-index": number;
+}
+interface DayForecast {
+  maxtemp_c: number;
+  mintemp_c: number;
+  daily_chance_of_rain: number;
+}
+interface ForecastDay {
+  hour: {
+    time: string;
+    temp_c: number;
+    feelslike_c: number;
+    wind_kph: number;
+    wind_dir: string;
+  }[];
+  day: DayForecast & {
+    air_quality: AirQuality;
+  };
+}
+
+interface WeatherData {
+  current: CurrentWeather;
+  location: Location;
+  forecast: {
+    forecastday: ForecastDay[];
+  };
+}
+
+
+
 
 export default  function Home() {
   // Extract hourly data for the temperature chart
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<WeatherData | null>(null);
   useEffect(() => {
     async function fetchData() {
       try {
@@ -25,25 +98,24 @@ export default  function Home() {
     fetchData();
   }, []);
 
-  if (!data || !data.forecast) return <p>Loading...</p>;
+  if (!data ) return <p>Loading...</p>;
 
-  const hourlyData = data.forecast.forecastday[0].hour.map(hour => ({
+  const hourlyData: HourlyData[] = data.forecast.forecastday[0].hour.map(hour => ({
     time: hour.time.split(' ')[1],
     temp: hour.temp_c,
     feels_like: hour.feelslike_c,
   }));
 
-  const hourlyWindData =
-    data.forecast.forecastday[0]?.hour?.map((hour: any) => ({
-      time: hour.time.split(" ")[1],
-      wind_kph: hour.wind_kph,
-      wind_dir: hour.wind_dir,
-    })) || [];
+  const hourlyWindData: HourlyWindData[] = data.forecast.forecastday[0]?.hour?.map(hour => ({
+    time: hour.time.split(' ')[1],
+    wind_kph: hour.wind_kph,
+    wind_dir: hour.wind_dir,
+  })) || [];
 
-  const currentWeather = data.current;
-  const location = data.location;
-  const forecast = data.forecast.forecastday[0];
-  const currentAirQuality = data.forecast.forecastday[0]?.day.air_quality;
+  const currentWeather: CurrentWeather = data.current;
+  const location: Location = data.location;
+  const forecast: ForecastDay = data.forecast.forecastday[0];
+  const currentAirQuality: AirQuality = forecast.day.air_quality;
   const airQualityData = [
     {
       name: "CO",
@@ -166,7 +238,6 @@ export default  function Home() {
                     <Sun className="h-8 w-8 text-yellow-500" />
                     <div>
                       <p className="text-2xl font-bold">UV: {currentWeather.uv}</p>
-                      <p className="text-gray-500">Dewpoint: {currentWeather.dewpoint_c}°C</p>
                     </div>
                   </div>
                 </div>
